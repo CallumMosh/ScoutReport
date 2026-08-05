@@ -82,6 +82,9 @@ export interface Dossier {
   comparablePlayers: Comparable[];
   westHamFit: WestHamFit;
   recommendation: Recommendation;
+  // Finance
+  financeCommentary: string;                 // AI deal-strategy note (SCR/amortisation terms)
+  finance?: { feeM: number; wageKPerWeek: number; contractYears: number; agentFeeM: number };
   // Meta
   savedAt: number | null;
   generatedAt: string;
