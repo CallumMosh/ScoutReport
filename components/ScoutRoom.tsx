@@ -6,8 +6,12 @@ import { loadAll, saveDossier, deleteDossier, storageMode } from "@/lib/store";
 import { AttributeRadar, CompareRadar, Per90Bars, Per90CompareBars, FitGauge, ScoreBar } from "./charts";
 import { useClubProfile, clubContextString, ClubProfileBar, FinancePanel } from "./Finance";
 import { ModelPicker, getSavedModel } from "./ModelPicker";
+import { SquadView } from "./Squad";
+import { ShortlistView } from "./Shortlist";
+import { PlannerView } from "./Planner";
+import { useSquad, useShortlist, useNeeds } from "./state";
 
-type View = "home" | "detail" | "compare";
+type View = "home" | "detail" | "compare" | "shortlist" | "squad" | "planner";
 
 export default function ScoutRoom() {
   const [players, setPlayers] = useState<Dossier[]>([]);
@@ -21,7 +25,14 @@ export default function ScoutRoom() {
   const [cmp, setCmp] = useState<[string | null, string | null]>([null, null]);
   const [model, setModel] = useState<string>("");
   const [club, setClub] = useClubProfile();
+  const [squad, setSquad] = useSquad();
+  const [shortlist, setShortlist] = useShortlist();
+  const [needsOverride, setNeedsOverride] = useNeeds();
   useEffect(() => { setModel(getSavedModel()); }, []);
+
+  const toggleShortlist = useCallback((id: string) => {
+    setShortlist(shortlist.includes(id) ? shortlist.filter((x) => x !== id) : [id, ...shortlist]);
+  }, [shortlist, setShortlist]);
 
   useEffect(() => { (async () => { try { setPlayers(await loadAll()); } catch (e: any) { setError(e?.message || ""); } })(); }, []);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
@@ -71,15 +82,21 @@ export default function ScoutRoom() {
           <Eyebrow>Scouting Dossiers · Claret &amp; Blue Lens</Eyebrow>
           <h1 style={{ font: `700 34px/1 ${FONT_D}`, letterSpacing: 0.5, margin: "4px 0 0", textTransform: "uppercase" }}>The Recruitment Room</h1>
         </div>
-        <nav style={{ display: "flex", gap: 8 }}>
+        <nav style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <Tab active={view === "home"} onClick={() => setView("home")}>Shelf</Tab>
+          <Tab active={view === "shortlist"} onClick={() => setView("shortlist")}>Shortlist</Tab>
+          <Tab active={view === "squad"} onClick={() => setView("squad")}>Squad</Tab>
+          <Tab active={view === "planner"} onClick={() => setView("planner")}>Planner</Tab>
           <Tab active={view === "compare"} onClick={() => setView("compare")}>Compare</Tab>
         </nav>
       </header>
 
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "10px 20px 60px" }}>
         {view === "home" && <Home {...{ query, setQuery, runScout, loading, error, players, setCurrent, setView, setEditing, remove, club, setClub, model, setModel }} />}
-        {view === "detail" && current && <Detail {...{ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club }} />}
+        {view === "detail" && current && <Detail {...{ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club, shortlisted: shortlist.includes(current.id), toggleShortlist }} />}
+        {view === "shortlist" && <ShortlistView {...{ players, shortlist, setShortlist, squad, club, needsOverride, setCurrent, setView }} />}
+        {view === "squad" && <SquadView {...{ squad, setSquad, club, needsOverride, setNeedsOverride }} />}
+        {view === "planner" && <PlannerView {...{ players, shortlist, squad, club, needsOverride }} />}
         {view === "compare" && <Compare {...{ players, cmp, setCmp, setCurrent, setView }} />}
       </main>
 
@@ -172,7 +189,7 @@ function Card({ p, onOpen, onDelete }: { p: Dossier; onOpen: () => void; onDelet
 }
 
 /* ------------------------------ DETAIL ------------------------------------ */
-function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club }: any) {
+function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club, shortlisted, toggleShortlist }: any) {
   const c: Dossier = current;
   const radarData = ATTR_KEYS.map((k) => ({ attribute: k, value: c.attributes[k] ?? 0 }));
   const per90ChartData = PER90_CHART_KEYS.map((k) => ({ metric: k, value: c.per90[k] ?? 0 }));
@@ -186,6 +203,7 @@ function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, lo
         <div style={{ display: "flex", gap: 8 }}>
           <button className="sr-btn sr-btn--ghost" disabled={loading} onClick={() => runScout(c.name)}>{loading ? "…" : "Regenerate"}</button>
           <button className="sr-btn sr-btn--ghost" onClick={() => setEditing((e: boolean) => !e)}>{editing ? "Done editing" : "Edit"}</button>
+          <button className="sr-btn sr-btn--ghost" onClick={() => { if (!isSaved) save(); toggleShortlist(c.id); }} style={shortlisted ? { color: C.good, borderColor: C.good } : undefined}>{shortlisted ? "Shortlisted ✓" : "+ Shortlist"}</button>
           <button className="sr-btn sr-btn--claret" onClick={save}>{isSaved ? "Update ✓" : "Save"}</button>
         </div>
       </div>
