@@ -88,6 +88,8 @@ export function normalizeDossier(raw: any, requestedName: string): Omit<Dossier,
       oneLiner: str(raw?.recommendation?.oneLiner, ""),
     },
 
+    financeCommentary: str(raw?.financeCommentary, ""),
+
     generatedAt: new Date().toISOString(),
   };
 }
