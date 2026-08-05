@@ -8,6 +8,7 @@ import {
 } from "@/lib/squad";
 import { ClubProfile } from "@/lib/finance";
 import { WEST_HAM_SQUAD } from "@/lib/presetSquad";
+import { SquadReview } from "./SquadReview";
 
 export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverride }: {
   squad: SquadPlayer[]; setSquad: (s: SquadPlayer[]) => void; club: ClubProfile;
@@ -108,6 +109,8 @@ export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverri
           <button className="sr-btn sr-btn--ghost" onClick={loadPreset}>Load West Ham squad</button>
         </div>
       </Panel>
+
+      {squad.length > 0 && <SquadReview players={squad} club={club} title="AI review of current squad" />}
     </>
   );
 }
