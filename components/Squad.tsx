@@ -7,6 +7,7 @@ import {
   clubHealth, playerAnnualCostM,
 } from "@/lib/squad";
 import { ClubProfile } from "@/lib/finance";
+import { WEST_HAM_SQUAD } from "@/lib/presetSquad";
 
 export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverride }: {
   squad: SquadPlayer[]; setSquad: (s: SquadPlayer[]) => void; club: ClubProfile;
@@ -19,6 +20,10 @@ export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverri
   const ratioPct = allowance ? Math.round((summary.squadCostM / club.revenueM) * 100) : 0;
 
   const add = () => setSquad([...squad, { id: uid(), name: "New player", slot: "CM", age: 24, wageKPerWeek: 20, feeM: 0, contractYears: 3, rating: 70 }]);
+  const loadPreset = () => {
+    if (squad.length > 0 && !window.confirm("Replace the current squad with the West Ham preset?")) return;
+    setSquad(WEST_HAM_SQUAD.map((p) => ({ ...p, id: uid() })));
+  };
   const upd = (id: string, patch: Partial<SquadPlayer>) => setSquad(squad.map((p) => (p.id === id ? { ...p, ...patch } : p)));
   const del = (id: string) => setSquad(squad.filter((p) => p.id !== id));
 
@@ -64,7 +69,10 @@ export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverri
       {/* roster editor */}
       <Panel title="Current squad" accent={C.claret} style={{ marginTop: 16 }}>
         {squad.length === 0 ? (
-          <p style={{ font: `400 14px ${FONT_B}`, color: C.muted }}>No players yet. Add your current squad below — the finance and health figures update live.</p>
+          <div>
+            <p style={{ font: `400 14px ${FONT_B}`, color: C.muted }}>No players yet. Load the West Ham squad to get started, or add players manually — the finance and health figures update live. All figures are editable estimates.</p>
+            <button className="sr-btn sr-btn--claret" style={{ marginTop: 12 }} onClick={loadPreset}>Load West Ham squad</button>
+          </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 620 }}>
@@ -95,7 +103,10 @@ export function SquadView({ squad, setSquad, club, needsOverride, setNeedsOverri
             </table>
           </div>
         )}
-        <button className="sr-btn sr-btn--claret" style={{ marginTop: 14 }} onClick={add}>+ Add player</button>
+        <div style={{ display: "flex", gap: 8, marginTop: 14, flexWrap: "wrap" }}>
+          <button className="sr-btn sr-btn--claret" onClick={add}>+ Add player</button>
+          <button className="sr-btn sr-btn--ghost" onClick={loadPreset}>Load West Ham squad</button>
+        </div>
       </Panel>
     </>
   );
