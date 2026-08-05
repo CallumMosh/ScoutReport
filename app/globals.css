@@ -1,0 +1,80 @@
+:root {
+  --bg: #15121B; --bg2: #1C1824; --card: #221D2B; --cardHi: #2A2333;
+  --line: #3A3244; --lineSoft: #2E2836;
+  --claret: #A62E4E; --claretGlow: rgba(166,46,78,0.16);
+  --blue: #2FB3E8; --text: #EDE7EE; --muted: #9A8FA5; --faint: #6C6377;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sr-input {
+  background: var(--bg2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 9px; padding: 11px 13px; font-family: "Inter", sans-serif;
+  font-size: 14px; outline: none; transition: border-color .15s;
+}
+.sr-input:focus { border-color: var(--claret); }
+.sr-input::placeholder { color: var(--faint); }
+textarea.sr-input { line-height: 1.5; }
+select.sr-input { appearance: none; }
+
+.sr-btn {
+  font-family: "Oswald", sans-serif; font-weight: 600; font-size: 13px;
+  letter-spacing: 1px; text-transform: uppercase; padding: 11px 18px;
+  border-radius: 9px; cursor: pointer; border: 1px solid transparent;
+  transition: transform .1s, filter .15s, background .15s;
+}
+.sr-btn:active { transform: translateY(1px); }
+.sr-btn:disabled { opacity: .5; cursor: not-allowed; }
+.sr-btn--claret { background: var(--claret); color: #fff; }
+.sr-btn--claret:hover:not(:disabled) { filter: brightness(1.12); }
+.sr-btn--ghost { background: transparent; color: var(--muted); border-color: var(--line); }
+.sr-btn--ghost:hover:not(:disabled) { border-color: var(--blue); color: var(--text); }
+
+.sr-back {
+  background: none; border: none; color: var(--muted); font-family: "Oswald", sans-serif;
+  font-weight: 600; font-size: 13px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer;
+}
+.sr-back:hover { color: var(--text); }
+
+.sr-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+
+.sr-card {
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 16px; cursor: pointer; transition: border-color .15s, transform .12s, box-shadow .15s;
+}
+.sr-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -12px rgba(0,0,0,.6); border-color: var(--claret); }
+
+.sr-x { background: none; border: none; color: var(--faint); cursor: pointer; font-size: 13px; padding: 2px 6px; border-radius: 6px; }
+.sr-x:hover { color: var(--claret); background: var(--claretGlow); }
+
+.sr-range { -webkit-appearance: none; appearance: none; height: 4px; border-radius: 3px; background: var(--line); outline: none; }
+.sr-range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--claret); cursor: pointer; border: 2px solid var(--bg); }
+.sr-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--claret); cursor: pointer; border: 2px solid var(--bg); }
+
+.sr-toast {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  background: var(--cardHi); border: 1px solid var(--claret); color: var(--text);
+  font-family: "JetBrains Mono", monospace; font-size: 13px; padding: 10px 18px;
+  border-radius: 10px; box-shadow: 0 8px 30px -8px rgba(0,0,0,.7); animation: srpop .25s ease; z-index: 50;
+}
+@keyframes srpop { from { opacity: 0; transform: translate(-50%, 8px); } to { opacity: 1; transform: translate(-50%, 0); } }
+
+.sr-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.sr-radar-row { display: grid; grid-template-columns: 1.35fr 1fr; gap: 16px; }
+@media (max-width: 760px) { .sr-2col, .sr-radar-row { grid-template-columns: 1fr; } }
+
+table.sr-table { width: 100%; border-collapse: collapse; font-family: "JetBrains Mono", monospace; font-size: 13px; }
+table.sr-table td { padding: 7px 8px; border-bottom: 1px solid var(--lineSoft); }
+table.sr-table td:last-child { text-align: right; color: var(--text); }
+table.sr-table td:first-child { color: var(--muted); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
