@@ -59,13 +59,21 @@ Return EXACTLY this JSON shape and nothing else:
     "risks": string,
     "subScores": { "systemFit": number, "styleFit": number, "plReadiness": number, "value": number, "squadNeed": number }
   },
-  "recommendation": { "rating": string, "oneLiner": string }
+  "recommendation": { "rating": string, "oneLiner": string },
+  "financeCommentary": string
 }
+
+FINANCE COMMENTARY (financeCommentary): 3-5 sentences of concrete recruitment-finance strategy for THIS player and the acquiring club described in the user message. Use correct terminology and reason about:
+- transfer-fee AMORTISATION (annual charge = fee ÷ contract length, capped at a 5-year amortisation period) and how contract length changes the annual book cost;
+- the SQUAD COST RATIO (SCR): squad cost (wages + amortisation + agents' fees) as a % of football income, and whether this deal pressures that ratio;
+- if the club is relegated / in the Championship: PARACHUTE PAYMENTS inflating the income base and the Championship SCR allowance, and the risk when parachutes taper;
+- BOOK VALUE / resale: signing younger players on longer deals preserves trading value; academy/"pure profit" sales help the ratio.
+Recommend an optimal contract length and explain the SCR trade-off. Be specific to the club context given.
 
 Length guide (detailed but not rambling): summary 2-3 sentences; style 3-4 sentences; each strength/weakness detail 1-2 sentences; careerTrajectory, developmentProjection, westHamFit.reasoning 2-4 sentences each; injuryProfile and setPieceRole 1-2 sentences. Return ONLY the JSON object.`;
 
-export function buildStructureMessage(name: string, research: string) {
-  return `Player: ${name}\n\nFresh web-researched notes to convert into the dossier JSON:\n\n${research}`;
+export function buildStructureMessage(name: string, research: string, clubContext: string) {
+  return `Player: ${name}\n\nAcquiring club context (for westHamFit and financeCommentary):\n${clubContext}\n\nFresh web-researched notes to convert into the dossier JSON:\n\n${research}`;
 }
 
 // Re-export for the API route.
