@@ -4,6 +4,8 @@ import { C, FONT_D, FONT_B, FONT_M, clamp, num, fitColor } from "@/lib/theme";
 import { ATTR_KEYS, PER90_KEYS, PER90_CHART_KEYS, Dossier, Rated, posGroup } from "@/lib/types";
 import { loadAll, saveDossier, deleteDossier, storageMode } from "@/lib/store";
 import { AttributeRadar, CompareRadar, Per90Bars, Per90CompareBars, FitGauge, ScoreBar } from "./charts";
+import { useClubProfile, clubContextString, ClubProfileBar, FinancePanel } from "./Finance";
+import { ModelPicker, getSavedModel } from "./ModelPicker";
 
 type View = "home" | "detail" | "compare";
 
@@ -17,6 +19,9 @@ export default function ScoutRoom() {
   const [error, setError] = useState("");
   const [toast, setToast] = useState("");
   const [cmp, setCmp] = useState<[string | null, string | null]>([null, null]);
+  const [model, setModel] = useState<string>("");
+  const [club, setClub] = useClubProfile();
+  useEffect(() => { setModel(getSavedModel()); }, []);
 
   useEffect(() => { (async () => { try { setPlayers(await loadAll()); } catch (e: any) { setError(e?.message || ""); } })(); }, []);
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 2200); };
@@ -25,16 +30,17 @@ export default function ScoutRoom() {
     const n = name.trim(); if (!n) return;
     setLoading(true); setError("");
     try {
-      const res = await fetch("/api/scout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: n }) });
+      const res = await fetch("/api/scout", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ name: n, model, clubContext: clubContextString(club) }) });
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to build dossier.");
       const dossier: Dossier = json.dossier;
       const existing = players.find((p) => p.name.toLowerCase() === n.toLowerCase());
       if (existing) { dossier.id = existing.id; dossier.savedAt = existing.savedAt; }
       setCurrent(dossier); setEditing(false); setView("detail"); setQuery("");
+      if (json.grounded === false) flash("Rate-limited — built from model knowledge, not live search");
     } catch (e: any) { setError(e?.message || "Something went wrong."); }
     finally { setLoading(false); }
-  }, [players]);
+  }, [players, model, club]);
 
   const save = useCallback(async () => {
     if (!current) return;
@@ -72,8 +78,8 @@ export default function ScoutRoom() {
       </header>
 
       <main style={{ maxWidth: 1080, margin: "0 auto", padding: "10px 20px 60px" }}>
-        {view === "home" && <Home {...{ query, setQuery, runScout, loading, error, players, setCurrent, setView, setEditing, remove }} />}
-        {view === "detail" && current && <Detail {...{ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove }} />}
+        {view === "home" && <Home {...{ query, setQuery, runScout, loading, error, players, setCurrent, setView, setEditing, remove, club, setClub, model, setModel }} />}
+        {view === "detail" && current && <Detail {...{ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club }} />}
         {view === "compare" && <Compare {...{ players, cmp, setCmp, setCurrent, setView }} />}
       </main>
 
@@ -86,7 +92,7 @@ export default function ScoutRoom() {
 }
 
 /* ------------------------------- HOME ------------------------------------- */
-function Home({ query, setQuery, runScout, loading, error, players, setCurrent, setView, setEditing, remove }: any) {
+function Home({ query, setQuery, runScout, loading, error, players, setCurrent, setView, setEditing, remove, club, setClub, model, setModel }: any) {
   const groups = useMemo(() => {
     const g: Record<string, Dossier[]> = {};
     players.forEach((p: Dossier) => { const k = posGroup(p.position); (g[k] ||= []).push(p); });
@@ -95,6 +101,7 @@ function Home({ query, setQuery, runScout, loading, error, players, setCurrent, 
 
   return (
     <>
+      <ClubProfileBar club={club} onChange={setClub} />
       <section style={{ background: C.card, border: `1px solid ${C.line}`, borderRadius: 16, padding: 22, marginTop: 14, position: "relative", overflow: "hidden" }}>
         <div style={{ position: "absolute", right: -40, top: -40, width: 180, height: 180, background: C.claretGlow, borderRadius: "50%", filter: "blur(10px)" }} />
         <Eyebrow>New assignment</Eyebrow>
@@ -108,6 +115,7 @@ function Home({ query, setQuery, runScout, loading, error, players, setCurrent, 
         <p style={{ color: C.faint, font: `400 11px ${FONT_B}`, marginTop: 12, lineHeight: 1.5 }}>
           Each dossier is built from a live web search, so figures track the latest season — but always sanity-check a key stat. Hit <b style={{ color: C.muted }}>Edit</b> on any dossier to correct anything before saving.
         </p>
+        <ModelPicker value={model} onChange={setModel} />
       </section>
 
       {players.length === 0 ? (
@@ -164,7 +172,7 @@ function Card({ p, onOpen, onDelete }: { p: Dossier; onOpen: () => void; onDelet
 }
 
 /* ------------------------------ DETAIL ------------------------------------ */
-function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove }: any) {
+function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, loading, setView, remove, club }: any) {
   const c: Dossier = current;
   const radarData = ATTR_KEYS.map((k) => ({ attribute: k, value: c.attributes[k] ?? 0 }));
   const per90ChartData = PER90_CHART_KEYS.map((k) => ({ metric: k, value: c.per90[k] ?? 0 }));
@@ -242,6 +250,9 @@ function Detail({ current, editing, setEditing, upd, save, isSaved, runScout, lo
         {editing ? <textarea className="sr-input" style={{ width: "100%", minHeight: 60, marginTop: 12 }} value={c.financialNotes} onChange={(e) => upd({ financialNotes: e.target.value })} />
           : c.financialNotes && <p style={{ font: `400 14px/1.55 ${FONT_B}`, color: C.muted, marginTop: 12 }}>{c.financialNotes}</p>}
       </Panel>
+
+      {/* Finance engine: amortisation, SCR impact, contract optimiser */}
+      <FinancePanel dossier={c} club={club} upd={upd} editing={editing} />
 
       {/* Summary */}
       <Panel title="Scout summary" accent={C.claret} style={{ marginTop: 16 }}>
