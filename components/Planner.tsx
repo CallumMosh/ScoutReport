@@ -8,6 +8,7 @@ import {
   autoNeeds, resolveNeeds, summariseSquad,
 } from "@/lib/squad";
 import { ClubProfile } from "@/lib/finance";
+import { SquadReview } from "./SquadReview";
 
 export function PlannerView({ players, shortlist, squad, club, needsOverride }: {
   players: Dossier[]; shortlist: string[]; squad: SquadPlayer[]; club: ClubProfile;
@@ -28,6 +29,7 @@ export function PlannerView({ players, shortlist, squad, club, needsOverride }: 
 
   const needs = resolveNeeds(autoNeeds(summariseSquad(squad)), needsOverride);
   const plan = useMemo(() => simulate(squad, incomings, outIds, club, needs), [squad, incomings, outIds, club, needs]);
+  const projected = useMemo(() => [...squad.filter((p) => !outIds.includes(p.id)), ...incomings], [squad, outIds, incomings]);
 
   const toggle = (arr: string[], set: (v: string[]) => void, id: string) =>
     set(arr.includes(id) ? arr.filter((x) => x !== id) : [...arr, id]);
@@ -104,6 +106,9 @@ export function PlannerView({ players, shortlist, squad, club, needsOverride }: 
           </div>
         )}
       </Panel>
+
+      <SquadReview players={projected} club={club} title="AI review of projected squad"
+        note={`This is a PROJECTED squad after ${incomings.length} in and ${outIds.length} out. Assess the squad AS PROJECTED.`} />
     </>
   );
 }
